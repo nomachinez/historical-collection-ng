@@ -122,7 +122,7 @@ The documents look like this in the collection.  Note this is from the first ``p
 
 And the initial delta looks like this (mongosh):
 
-    FancyProjectDatabase> db.Contacts_deltas.findOne({"_id": ObjectId("953e6a68c42acbd4d4ecf993"))
+    FancyProjectDatabase> db.Contacts_deltas.findOne({"_id": ObjectId("953e6a68c42acbd4d4ecf993")})
     {
       _id: ObjectId("953e6a68c42acbd4d4ecf993"),
       DisplayName: 'Joe Bagadonuts',
@@ -165,7 +165,7 @@ Now the live document looks like this(mongosh):
 
 And the latest delta looks like this (mongosh):
 
-    FancyProjectDatabase> db.Contacts_deltas.findOne({"_id": ObjectId("653e6a68c42acb44d4ecf9f1"))
+    FancyProjectDatabase> db.Contacts_deltas.findOne({"_id": ObjectId("653e6a68c42acb44d4ecf9f1")})
     {
       _id: ObjectId("653e6a68c42acb44d4ecf9f1"),
       __HISTORICAL_COLLECTION_INTERNAL_METADATA: {
