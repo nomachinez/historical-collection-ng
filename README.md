@@ -6,7 +6,7 @@ This project started as simple tweaks to Jordan Hewitt's historical_collection f
 Here are some notable features of this library. Many of these are different from the original:
 - Version'ed documents. All the deltas are stored in a separate deltas table, called {CollectionName}_deltas by default.  The library manages this collection.
 - The version of the doc in the original {CollectionName} collection is always the latest version. This makes it very easy to query the live version since in my applications, that is the most-referenced version.
-- To help with speed when replaying the deltas (e.g. when you're getting a previous revision), the library also supports automatic snapshots. This functionality will snapshot the live document in the _deltas collection every X deltas (5 by default).
+- To help with speed when replaying the deltas (e.g. when you're getting a previous revision), the library also supports automatic snapshots. This functionality will snapshot the live document in the _deltas collection instead of the actual delta every X deltas (5 by default).
 - The library will only update the deltas or live version if any the document attributes (except for those in the ``ignore_fields`` parameter) do not match.. unless you pass in ``force=True``.
 - When you update or insert a document into the collection, this library will add a key ("__HISTORICAL_COLLECTION_INTERNAL_METADATA") to the original document to keep track of the created, deleted, and updated states, the first snapshot reference, and to hold arbitrary metadata that you may want to pass in.
 - The original version relies on non-guaranteed row order consistency when finding all the deltas to give you the "live" version.  This version keeps an explicit delta chain instead.
