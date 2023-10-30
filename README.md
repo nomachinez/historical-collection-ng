@@ -9,8 +9,8 @@ Here are some notable features of this library. Many of these are different from
 - To help with speed when replaying the deltas (e.g. when you're getting a previous revision), the library also supports automatic snapshots. This functionality will snapshot the live document in the _deltas collection every X deltas (5 by default).
 - The library will only update the deltas or live version if any the document attributes (except for those in the ``ignore_fields`` parameter) do not match.. unless you pass in ``force=True``.
 - When you update or insert a document into the collection, this library will add a key ("__HISTORICAL_COLLECTION_INTERNAL_METADATA") to the original document to keep track of the created, deleted, and updated states, the first snapshot reference, and to hold arbitrary metadata that you may want to pass in.
-- The original version relies on non-guarenteed consistency when finding all the deltas to give you the "live" version.  This version keeps an explicit delta chain instead.
-- We attempt to query and make changes in a transaction so that our reads and write are autonomous and consistency is guarenteed.
+- The original version relies on non-guaranteed consistency when finding all the deltas to give you the "live" version.  This version keeps an explicit delta chain instead.
+- We attempt to query and make changes in a transaction so that our reads and write are autonomous and consistency is guaranteed.
 
 
 ## To use this library:
