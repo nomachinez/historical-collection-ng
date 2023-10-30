@@ -11,6 +11,7 @@ Here are some notable features of this library. Many of these are different from
 - When you update or insert a document into the collection, this library will add a key ("__HISTORICAL_COLLECTION_INTERNAL_METADATA") to the original document to keep track of the created, deleted, and updated states, the first snapshot reference, and to hold arbitrary metadata that you may want to pass in.
 - The original version relies on non-guaranteed consistency when finding all the deltas to give you the "live" version.  This version keeps an explicit delta chain instead.
 - We attempt to query and make changes in a transaction so that our reads and write are autonomous and consistency is guaranteed.
+- When you "delete" a doc through ``patch_many`` (with ``missing_mark_deleted=True``) you actually just _flag_ it as deleted. This is so you can keep a history of deleted documents. e.g. you can run a point-in-time query to get a list of all active docs during X period.  At this point there is no retention period, or in other words, there is no facility to clean up those deleted documents and over time your database will grow and grow. I will probably add this in at some point and the new snapshotting functionality will help.
 
 
 ## To use this library:
