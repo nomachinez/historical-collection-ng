@@ -46,7 +46,7 @@ The default internal metadata keyname and the number of deltas before snapshots 
 
 Now that your collection class is set up and you're connected to the database, you use 2 main functions to interact with the library:
 
-``object.patch_one(doc, force, ignore_fields, metadata)`` 
+``patch_one(doc, force, ignore_fields, metadata)`` 
 
     :param doc: Document object to patch.
 
