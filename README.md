@@ -21,6 +21,7 @@ Here are some notable features of this library. Many of these are different from
 - [``patch_many(docs, missing_mark_deleted, missing_mark_deleted_filter, force, ignore_fields, metadata)``](#patch_manydocs-missing_mark_deleted-missing_mark_deleted_filter-force-ignore_fields-metadata)
 - [``get_revision_by_date(doc, version_timestamp)``](#get_revision_by_datedoc-version_timestamp)
 - [``get_revision_by_version(doc, version_major, version_minor)``](#get_revision_by_versiondoc-version_major-version_minor)
+- [``delete_doc(doc)``](#delete_docdoc)
 
 ### Setup
 First, set up your imports and create a class that includes a PK_FIELDS variable to include the primary keys of the collection. PK_FIELDS is used to tell if the passed-in doc has a version already in the live collection and should include whatever field(s) you need to determine that. If a live version already exists, the library will perform the deltas work. If not, the library will create a new live document.
@@ -226,5 +227,19 @@ For example (python):
     
     joe_revision = coll_contacts.get_revision_by_version(joe_latest, previous_version_major, previous_version_minor)
 
+### ``delete_doc(doc)``
 
-    
+        Delete a document and all the deltas
+
+        :param doc: document to delete
+
+For example:
+
+    from datetime import datetime
+    .... other imports, set up database connection, etc...
+
+    coll_Contacts = Contacts(database=db, name=coll_contacts_collection_name)
+    joe_latest = coll_contacts.find_one({'email': 'joe@donutco.com'})
+
+    delete_result = coll_contacts.delete_doc(joe_latest)
+
