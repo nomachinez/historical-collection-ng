@@ -85,10 +85,6 @@ class DocHistoryCollection(Collection):
                     )
                 )
 
-    def revisions(self, *args, **kwargs):
-        # TODO Update to get a list of revision versions... and maybe metadata?
-        return ""
-
     def _check_key(self, *docs):
         """Verify that the same `PK_FIELDS` field is present for every doc."""
         pks = set()
@@ -149,14 +145,29 @@ class DocHistoryCollection(Collection):
             Change.REMOVE: self._get_removals(last, current, ignore_fields),
         }
 
-    def delete_doc_and_patches(self, *args, **kwargs):
-        # TODO Update delete by delta instead of filter
-        doc = args[0]
-        fltr = self._document_filter(doc)
-        log.debug("Deleting %s", doc)
-        if super().delete_one(*args, **kwargs):
-            # Delete all patches
-            self._deltas_collection.delete_many(fltr)
+    def delete_doc(self, doc):
+        """
+        Delete a document and all the deltas
+
+        :param doc: document to delete
+        """
+        delta_ids = []
+        delta_id = doc[self.internal_metadata_keyname]['previous_delta']
+        while True:
+            delta = self._deltas_collection.find_one({'_id': delta_id})
+            if delta and '_id' in delta:
+                delta_ids.append(delta['_id'])
+                if 'previous_delta' in delta[self.internal_metadata_keyname]:
+                    delta_id = delta[self.internal_metadata_keyname]['previous_delta']
+                else:
+                    break
+                
+        if len(delta_ids) > 0:
+            # We should always have at least one
+            if self._deltas_collection.delete_many({'id': {'$in': delta_ids}}):
+                return super().delete_one({'_id': doc['_id']})
+
+        return None
 
     def get_revision_by_date(self, doc, version_timestamp):
         """
@@ -205,13 +216,6 @@ class DocHistoryCollection(Collection):
                     # We're at the beginning.  Assume that delta[self.internal_metadata_keyname]['type'] == 'snapshot' caught it?
                     doc_revision = base_doc
                     break
-
-                #if delta[self.internal_metadata_keyname]['timestamp'] < version_timestamp or \
-                #        'previous_delta' not in delta[self.internal_metadata_keyname] or \
-                #        delta[self.internal_metadata_keyname]['previous_delta'] is None:
-                #    break
-                #else:
-                #    delta_id = delta[self.internal_metadata_keyname]['previous_delta']
             else:
                 # Reached the end and no deltas
                 break
@@ -246,7 +250,18 @@ class DocHistoryCollection(Collection):
         return doc
 
 
-    def get_revision_by_version(self, version_major, version_minor):
+    def get_revision_by_version(self, doc, version_major, version_minor):
+        """
+        Get the document as it existed at the specified version
+
+        :param doc: Live document that we want to find the previous version for
+
+        :param version_major: The 'major' version number.
+
+        :param version_minor: The 'minor' version number.
+        """
+
+        # TODO This is broken
         doc = None
 
         # Get the first one
