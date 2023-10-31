@@ -1,4 +1,4 @@
-# historical-collection-ng
+# pymongo_doc_history
 Library to manage version history for MongoDB documents
 
 This project started as simple tweaks to Jordan Hewitt's historical_collection found [here](https://gitlab.com/srcrr/historical_collection) but at this point almost all of the code is new. Go check out the original and see if that works for you also.
@@ -8,8 +8,8 @@ Here are some notable features of this library. Many of these are different from
 - The version of the doc in the original {CollectionName} collection is always the latest version. This makes it very easy to query the live version since in my applications, that is the most-referenced version.
 - To help with speed when replaying the deltas (e.g. when you're getting a previous revision), the library also supports automatic snapshots. This functionality will snapshot the live document in the _deltas collection instead of the actual delta every X deltas (5 by default).
 - The library will only update the deltas or live version if any the document attributes (except for those in the ``ignore_fields`` parameter) do not match.. unless you pass in ``force=True``.
-- When you update or insert a document into the collection, this library will add a key ("__HISTORICAL_COLLECTION_INTERNAL_METADATA") to the original document to keep track of the created, deleted, and updated states, the latest snapshot reference, and to hold arbitrary metadata that you may want to pass in.
-- The Jordan's version of historical_collection relies on non-guaranteed row order consistency when finding all the deltas to give you the "live" version.  This version keeps an explicit delta chain instead.
+- When you update or insert a document into the collection, this library will add a key ("__DOC_HISTORY_INTERNAL_METADATA") to the original document to keep track of the created, deleted, and updated states, the latest snapshot reference, and to hold arbitrary metadata that you may want to pass in.
+- The historical_collection library relies on non-guaranteed row order consistency when finding all the deltas to give you the "live" version.  doc_history keeps an explicit delta chain instead.
 - We attempt to query and make changes in a transaction so that our reads and write are autonomous and consistency is guaranteed.
 - When you "delete" a doc through ``patch_many`` (with ``missing_mark_deleted=True``) you actually just _flag_ it as deleted. This is so you can keep a history of deleted documents. e.g. you can run a point-in-time query to get a list of all active docs during X period.  At this point the retention period is infinite, or in other words, there is no facility to clean up those deleted documents and over time your database will grow and grow. I will probably add this in at some point and the new snapshotting functionality will help.
 
@@ -18,9 +18,9 @@ Here are some notable features of this library. Many of these are different from
 
 First, set up your imports and create a class that includes a PK_FIELDS variable to include the primary keys of the collection. PK_FIELDS is used to tell if the passed-in doc has a version already in the live collection and should include whatever field(s) you need to determine that. If a live version already exists, the library will perform the deltas work. If not, the library will create a new live document.
 
-    from historical_collection import HistoricalCollection
+    from doc_history import DocHistoryCollection
     from pymongo import MongoClient
-    class Contacts(HistoricalCollection):
+    class Contacts(DocHistoryCollection):
         PK_FIELDS = ['email', ]  # <<= This is the only requirement
 
 After you have your class and PK_FIELDS set up, connect to the database (python):
@@ -107,7 +107,7 @@ The documents look like this in the collection.  Note this is from the first ``p
       email: 'joe@donutco.com',
       FavoriteRestaurant: 'McDonalds',
       RecordOwner: 'Patrick',
-      __HISTORICAL_COLLECTION_INTERNAL_METADATA: {
+      __DOC_HISTORY_INTERNAL_METADATA: {
           previous_delta: ObjectId("953e6a68c42acbd4d4ecf993"),
           version: { major: 1, minor: 0 },
           deleted: {},
@@ -129,7 +129,7 @@ And the initial delta looks like this (mongosh):
       DisplayName: 'Joe Bagadonuts',
       email: 'joe@donutco.com',
       FavoriteRestaurant: 'McDonalds',
-      __HISTORICAL_COLLECTION_INTERNAL_METADATA: {
+      __DOC_HISTORY_INTERNAL_METADATA: {
           type: 'snapshot',
           version: { major: 0, minor: 0 },
           timestamp: ISODate("2023-09-29T14:19:32.863Z")
@@ -150,7 +150,7 @@ Now the live document looks like this(mongosh):
       FavoriteRestaurant: 'Burger King',
       Car: '2022 BMW X5',
       RecordOwner: 'Patrick',
-      __HISTORICAL_COLLECTION_INTERNAL_METADATA: {
+      __DOC_HISTORY_INTERNAL_METADATA: {
           previous_delta: ObjectId("653e6a68c42acb44d4ecf9f1"),
           version: { major: 1, minor: 1 },
           deleted: {},
@@ -169,7 +169,7 @@ And the latest delta looks like this (mongosh):
     FancyProjectDatabase> db.Contacts_deltas.findOne({"_id": ObjectId("653e6a68c42acb44d4ecf9f1")})
     {
       _id: ObjectId("653e6a68c42acb44d4ecf9f1"),
-      __HISTORICAL_COLLECTION_INTERNAL_METADATA: {
+      __DOC_HISTORY_INTERNAL_METADATA: {
           previous_delta: ObjectId("953e6a68c42acbd4d4ecf993")
           deltas: { A: { }, U: { FavoriteRestaurant: 'McDonalds' }, R: ['Car'] },
           type: 'patch',
