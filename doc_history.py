@@ -27,8 +27,7 @@ class DocHistoryCollection(Collection):
     """Record everything associated with a collection."""
 
     DEFAULT_num_deltas_before_snapshot = 5
-    # DEFAULT_internal_metadata_keyname = '__DOC_HISTORY_INTERNAL_METADATA'
-    DEFAULT_internal_metadata_keyname = '__APIDATALAKE_INTERNAL_METADATA'
+    DEFAULT_internal_metadata_keyname = '__DOC_HISTORY_INTERNAL_METADATA'
 
     def __new__(cls, *args, **kwargs):
         """Mainly checks to ensure all subclasses have a PK_FIELDS attribute."""
