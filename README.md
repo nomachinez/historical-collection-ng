@@ -235,8 +235,7 @@ For example (python):
 
 For example:
 
-    from datetime import datetime
-    .... other imports, set up database connection, etc...
+    .... imports, set up database connection, etc...
 
     coll_Contacts = Contacts(database=db, name=coll_contacts_collection_name)
     joe_latest = coll_contacts.find_one({'email': 'joe@donutco.com'})
