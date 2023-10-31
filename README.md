@@ -44,7 +44,7 @@ The default internal metadata keyname and the number of deltas before snapshots 
     coll_contacts = Contacts(database=db, name=coll_contacts_collection_name, internal_metadata_keyname="__ABCD", num_deltas_before_snapshot=20)
 
 
-Now that your collection class is set up and you're connected to the database, you use 2 main functions to interact with the library:
+Now that your collection class is set up and you're connected to the database, you use 2 main functions to update or add documents:
 
 ``patch_one(doc, force, ignore_fields, metadata)`` 
 
@@ -177,3 +177,32 @@ And the latest delta looks like this (mongosh):
           timestamp: ISODate("2023-09-29T14:19:32.863Z")
           metadata: null
     }
+
+Also there are:
+``get_revision_by_date(doc, version_timestamp)`` to get a revision of the document as it was at a certain point in time. For example:
+
+    from datetime import datetime, timedelta
+    .... other imports, set up database connection, etc...
+
+    coll_Contacts = Contacts(database=db, name=coll_contacts_collection_name)
+    joe_latest = coll_contacts.find_one({'email': 'joe@donutco.com'})
+    
+    today = datetime.today()
+    four_weeks_ago_timestamp = today - timedelta(weeks=4)
+    joe_revision = coll_contacts.get_revision_by_date(joe_latest, four_weeks_ago_timestamp)
+
+``get_revision_by_version(version_major, version_minor)`` to get a revision of the document based on the version numbers. For example:
+
+    from datetime import datetime
+    .... other imports, set up database connection, etc...
+
+    coll_Contacts = Contacts(database=db, name=coll_contacts_collection_name)
+    joe_latest = coll_contacts.find_one({'email': 'joe@donutco.com'})
+
+    previous_version_major = 1
+    previous_version_minor = joe_latest['__DOC_HISTORY_INTERNAL_METADATA']['version']['minor'] - 2
+    
+    joe_revision = coll_contacts.get_revision_by_version(previous_version_major, previous_version_minor)
+
+
+    
