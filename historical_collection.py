@@ -158,7 +158,95 @@ class HistoricalCollection(Collection):
             # Delete all patches
             self._deltas_collection.delete_many(fltr)
 
-    def _get_revision_doc(self, version_major, version_minor):
+    def get_revision_by_date(self, doc, version_timestamp):
+        """
+        Get the document as it existed at a point in time
+
+        :param doc: Live document that we want to find the previous version for
+
+        :param version_timestamp: The point in time that for which we are attempting to get the version.
+        """
+        doc_revision = None
+
+        # if the doc was created after the timestamp then we know it wasn't around back then.
+        if doc[self.internal_metadata_keyname]['created']['timestamp'] > version_timestamp:
+            return None
+
+        deltas = []
+        base_doc = deepcopy(super().find_one({'_id': doc['_id']}))
+
+        # Get all the revisions from now until one before version_timestamp
+        delta_id = base_doc[self.internal_metadata_keyname]['previous_delta']
+
+        while True:
+            delta = self._deltas_collection.find_one({'_id': delta_id})
+            if delta is not None and 'timestamp' in delta[self.internal_metadata_keyname]:
+                if delta[self.internal_metadata_keyname]['timestamp'] < version_timestamp:
+                    # This is our last one.
+                    if delta[self.internal_metadata_keyname]['type'] == 'snapshot':
+                        doc_revision = deepcopy(delta)
+                    else:
+                        deltas.append(deepcopy(delta))
+
+                    break
+                elif delta[self.internal_metadata_keyname]['type'] == 'snapshot':
+                    deltas.clear()
+                    base_doc = deepcopy(delta)
+                elif 'deltas' in delta[self.internal_metadata_keyname]:
+                    deltas.append(delta[self.internal_metadata_keyname]['deltas'])
+                else:
+                    # error
+                    print("ERROR ERROR")
+                    break
+
+                if 'previous_delta' in delta[self.internal_metadata_keyname]:
+                    delta_id = delta[self.internal_metadata_keyname]['previous_delta']
+                else:
+                    # We're at the beginning.  Assume that delta[self.internal_metadata_keyname]['type'] == 'snapshot' caught it?
+                    doc_revision = base_doc
+                    break
+
+                #if delta[self.internal_metadata_keyname]['timestamp'] < version_timestamp or \
+                #        'previous_delta' not in delta[self.internal_metadata_keyname] or \
+                #        delta[self.internal_metadata_keyname]['previous_delta'] is None:
+                #    break
+                #else:
+                #    delta_id = delta[self.internal_metadata_keyname]['previous_delta']
+            else:
+                # Reached the end and no deltas
+                break
+
+        if doc_revision is None:
+            doc_revision = self._apply_patches(base_doc, deltas)
+            
+        if self.internal_metadata_keyname in doc_revision:
+            del doc_revision[self.internal_metadata_keyname]
+
+        return doc_revision
+
+
+    def _apply_patches(self, doc, deltas):
+        """
+        Takes a list of deltas and applies them in order to the starting doc
+
+        :param doc: The starting/latest doc
+        :param deltas: a list of deltas
+        """
+        for delta in deltas:
+            for (k, v) in delta.get(Change.ADD, {}).items():
+                doc[k] = v
+                for (k, v) in delta.get(Change.UPDATE, {}).items():
+                    doc[k] = v
+                for k in delta.get(Change.REMOVE, []):
+                    if k not in doc:
+                        log.warning("'%s' wasn't in instance %s. This was unexpected, so skipping.", k, doc)
+                    else:
+                        del doc[k]
+
+        return doc
+
+
+    def get_revision_by_version(self, version_major, version_minor):
         doc = None
 
         # Get the first one
@@ -271,7 +359,7 @@ class HistoricalCollection(Collection):
                             'major': 1, 
                             'minor': 0
                         }, 
-                        'deleted': {},
+                        'deleted': None,
                         'created': {'timestamp': self.timestamp, 'metadata': metadata},
                         'updated': {'timestamp': self.timestamp, 'metadata': metadata},
                         }
@@ -400,7 +488,7 @@ class HistoricalCollection(Collection):
         :param docs: A list of document objects to patch
 
         :param missing_mark_deleted: (Optional) Defaults to False. This function can optionally scan the collection
-                                     for any documents NOT passed in through docs and mark them ad deleted.
+                                     for any documents NOT passed in through docs and mark them as deleted.
 
         :param missing_mark_deleted_filter: (Optional) filter object that will be "and"ed to the list
                                             of documents to product the list of documents to mark
