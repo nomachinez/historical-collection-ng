@@ -16,6 +16,13 @@ Here are some notable features of this library. Many of these are different from
 
 ## To use this library:
 
+- [Setup](#setup)
+- [``patch_one(doc, force, ignore_fields, metadata)``](#patch_one)
+- [``patch_many()``](#patch_many)
+- [``get_revision_by_date()``](#get_revision_by_date)
+- [``get_revision_by_version()``](#get_revision_by_version)
+
+### Setup
 First, set up your imports and create a class that includes a PK_FIELDS variable to include the primary keys of the collection. PK_FIELDS is used to tell if the passed-in doc has a version already in the live collection and should include whatever field(s) you need to determine that. If a live version already exists, the library will perform the deltas work. If not, the library will create a new live document.
 
     from doc_history import DocHistoryCollection
@@ -44,9 +51,9 @@ The default internal metadata keyname and the number of deltas before snapshots 
     coll_contacts = Contacts(database=db, name=coll_contacts_collection_name, internal_metadata_keyname="__ABCD", num_deltas_before_snapshot=20)
 
 
-Now that your collection class is set up and you're connected to the database, you use 2 main functions to update or add documents:
+Now that your collection class is set up and you're connected to the database, you can use 2 main functions to update or add documents:
 
-``patch_one(doc, force, ignore_fields, metadata)`` 
+### ``patch_one(doc, force, ignore_fields, metadata)``
 
     :param doc: Document object to patch.
 
@@ -62,7 +69,7 @@ Now that your collection class is set up and you're connected to the database, y
 
 and
 
-``patch_many(docs, missing_mark_deleted, missing_mark_deleted_filter, force, ignore_fields, metadata)``
+### ``patch_many(docs, missing_mark_deleted, missing_mark_deleted_filter, force, ignore_fields, metadata)``
 
     :param docs: A list of document objects to patch
 
@@ -179,7 +186,16 @@ And the latest delta looks like this (mongosh):
     }
 
 Also there are:
-``get_revision_by_date(doc, version_timestamp)`` to get a revision of the document as it was at a certain point in time. For example:
+
+### ``get_revision_by_date(doc, version_timestamp)`` 
+
+    Get the document as it existed at a point in time
+
+    :param doc: Live document that we want to find the previous version for
+
+    :param version_timestamp: The point in time that for which we are attempting to get the version.
+
+For example (python):
 
     from datetime import datetime, timedelta
     .... other imports, set up database connection, etc...
@@ -191,7 +207,13 @@ Also there are:
     four_weeks_ago_timestamp = today - timedelta(weeks=4)
     joe_revision = coll_contacts.get_revision_by_date(joe_latest, four_weeks_ago_timestamp)
 
-``get_revision_by_version(version_major, version_minor)`` to get a revision of the document based on the version numbers. For example:
+and
+
+### ``get_revision_by_version(doc, version_major, version_minor)``
+
+NOTE: THIS IS BROKEN AND DOESNT CURRENTLY WORK
+
+For example (python):
 
     from datetime import datetime
     .... other imports, set up database connection, etc...
@@ -202,7 +224,7 @@ Also there are:
     previous_version_major = 1
     previous_version_minor = joe_latest['__DOC_HISTORY_INTERNAL_METADATA']['version']['minor'] - 2
     
-    joe_revision = coll_contacts.get_revision_by_version(previous_version_major, previous_version_minor)
+    joe_revision = coll_contacts.get_revision_by_version(joe_latest, previous_version_major, previous_version_minor)
 
 
     
