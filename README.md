@@ -229,9 +229,9 @@ For example (python):
 
 ### ``delete_doc(doc)``
 
-        Delete a document and all the deltas
+    Delete a document and all the deltas
 
-        :param doc: document to delete
+    :param doc: document to delete
 
 For example:
 
