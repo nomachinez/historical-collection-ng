@@ -20,7 +20,7 @@ Here are some notable features of this library. Many of these are different from
 - [``patch_one(doc, force, ignore_fields, metadata)``](#patch_onedoc-force-ignore_fields-metadata)
 - [``patch_many(docs, missing_mark_deleted, missing_mark_deleted_filter, force, ignore_fields, metadata)``](#patch_manydocs-missing_mark_deleted-missing_mark_deleted_filter-force-ignore_fields-metadata)
 - [``get_revision_by_date(doc, version_timestamp)``](#get_revision_by_datedoc-version_timestamp)
-- [``get_revision_by_version(doc, version_major, version_minor)``](#get_revision_by_versiondoc-version_major-version_minor)
+- [``get_revision_by_version(doc, version_major, version_minor)``](#get_revision_by_versiondoc-version_major-version_minor) (currently broken)
 - [``delete_doc(doc)``](#delete_docdoc)
 
 ### Setup
