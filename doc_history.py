@@ -239,14 +239,13 @@ class DocHistoryCollection(Collection):
         for delta in deltas:
             for (k, v) in delta.get(Change.ADD, {}).items():
                 doc[k] = v
-                for (k, v) in delta.get(Change.UPDATE, {}).items():
-                    doc[k] = v
-                for k in delta.get(Change.REMOVE, []):
-                    if k not in doc:
-                        log.warning("'%s' wasn't in instance %s. This was unexpected, so skipping.", k, doc)
-                    else:
-                        del doc[k]
-
+            for (k, v) in delta.get(Change.UPDATE, {}).items():
+                doc[k] = v
+            for k in delta.get(Change.REMOVE, []):
+                if k not in doc:
+                    log.warning("'%s' wasn't in instance %s. This was unexpected, so skipping.", k, doc)
+                else:
+                    del doc[k]
         return doc
 
 
